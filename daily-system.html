@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#060B18"/>
+<title>Daily System 🔥</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --bg:#060B18;--surface:#0F172A;--card:#141E30;--border:#1E293B;
+    --text:#F1F5F9;--muted:#64748B;--dim:#475569;
+    --cyan:#00D4FF;--purple:#A78BFA;--orange:#FF6B35;
+  }
+  html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;}
+  body{max-width:430px;margin:0 auto;padding-bottom:80px;}
+
+  .header{padding:28px 20px 16px;position:relative;}
+  .header::before{content:'';position:absolute;top:0;left:0;right:0;height:220px;
+    background:radial-gradient(ellipse at 50% -10%,rgba(0,212,255,0.07),transparent 65%);pointer-events:none;}
+  .label-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:4px;}
+  .label-top{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:4px;color:var(--cyan);text-transform:uppercase;}
+  .sw-status{display:inline-flex;align-items:center;gap:5px;font-family:'Space Mono',monospace;
+    font-size:10px;padding:4px 10px;border-radius:99px;}
+  .sw-dot{width:7px;height:7px;border-radius:50%;}
+  .clock{text-align:center;margin-bottom:6px;}
+  .clock-time{font-family:'Space Mono',monospace;font-size:52px;font-weight:700;
+    letter-spacing:-2px;line-height:1;
+    background:linear-gradient(135deg,var(--cyan),var(--purple));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .clock-date{color:var(--muted);font-family:'Space Mono',monospace;font-size:12px;margin-top:3px;}
+
+  .notif-banner{margin:0 16px 12px;border-radius:16px;padding:14px 16px;
+    background:linear-gradient(135deg,rgba(255,107,53,0.15),rgba(255,107,53,0.05));
+    border:1px solid rgba(255,107,53,0.3);display:flex;align-items:center;gap:12px;}
+  .notif-text{flex:1;font-size:12px;color:#94A3B8;line-height:1.5;}
+  .notif-btn{border:none;border-radius:10px;padding:8px 14px;font-family:'Space Mono',monospace;
+    font-weight:700;font-size:11px;cursor:pointer;white-space:nowrap;background:var(--orange);color:#fff;}
+
+  .day-progress{margin-top:16px;}
+  .progress-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);
+    font-family:'Space Mono',monospace;margin-bottom:5px;}
+  .bar-track{height:6px;background:var(--border);border-radius:99px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--cyan),var(--purple));transition:width .6s ease;}
+
+  .now-card{margin:0 16px 14px;border-radius:20px;padding:20px;position:relative;overflow:hidden;}
+  .now-tag{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;}
+  .now-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .now-title{font-size:22px;font-weight:800;margin-bottom:3px;}
+  .now-desc{font-size:13px;color:#94A3B8;}
+  .now-badge{border-radius:10px;padding:7px 13px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:#000;white-space:nowrap;flex-shrink:0;}
+  .block-progress{margin-top:14px;}
+  .bpr{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:4px;}
+  .block-track{height:4px;background:rgba(0,0,0,0.3);border-radius:99px;overflow:hidden;}
+  .block-fill{height:100%;border-radius:99px;transition:width 1s ease;}
+  .next-hint{margin-top:10px;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;}
+
+  .tabs{display:flex;padding:0 16px 12px;gap:8px;}
+  .tab-btn{flex:1;padding:11px 0;border-radius:12px;border:none;font-family:'Space Mono',monospace;font-weight:700;font-size:12px;cursor:pointer;transition:all .2s;}
+  .tab-btn.active{background:var(--cyan);color:#000;}
+  .tab-btn.inactive{background:var(--card);color:var(--dim);}
+
+  .schedule-list{padding:0 16px;display:flex;flex-direction:column;gap:10px;}
+  .task-item{display:flex;align-items:center;gap:14px;border-radius:16px;padding:14px 16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;border:1px solid var(--border);}
+  .task-item.cur{border-color:transparent;}
+  .task-item.past{opacity:.45;}
+  .cur-bar{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px;}
+  .t-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .t-name{font-size:14px;font-weight:700;}
+  .t-name.done{text-decoration:line-through;color:var(--dim);}
+  .t-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+  .t-time{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;}
+
+  .alarms-list{padding:0 16px;display:flex;flex-direction:column;gap:10px;}
+  .a-note{background:#0F172A;border-radius:14px;padding:12px 16px;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;line-height:1.6;border:1px solid var(--border);}
+  .alarm-item{display:flex;align-items:center;gap:14px;border-radius:16px;padding:14px 16px;border:1px solid var(--border);transition:all .2s;}
+  .a-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+  .a-name{font-size:14px;font-weight:700;}
+  .a-name.off{color:var(--dim);}
+  .a-time{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;margin-top:2px;}
+  .tog{width:52px;height:28px;border-radius:99px;position:relative;cursor:pointer;border:none;flex-shrink:0;transition:all .3s;padding:0;}
+  .tog-dot{position:absolute;top:4px;width:20px;height:20px;border-radius:50%;transition:left .3s;}
+  .test-btn{width:100%;margin-top:8px;padding:14px;border-radius:14px;border:1px solid rgba(0,212,255,.25);background:rgba(0,212,255,.07);color:var(--cyan);font-family:'Space Mono',monospace;font-weight:700;font-size:13px;cursor:pointer;}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.93);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px;animation:fadeIn .2s ease;}
+  .modal-box{border-radius:24px;padding:32px;max-width:340px;width:100%;text-align:center;animation:scaleIn .25s ease;}
+  .m-emoji{font-size:56px;margin-bottom:8px;animation:ring .5s ease infinite alternate;}
+  .m-tag{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;}
+  .m-title{font-size:26px;font-weight:800;margin-bottom:8px;}
+  .m-desc{font-size:15px;color:#94A3B8;margin-bottom:28px;}
+  .m-btn{border:none;border-radius:14px;padding:14px 40px;font-family:'Space Mono',monospace;font-weight:800;font-size:16px;cursor:pointer;}
+
+  .bottom-hint{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:linear-gradient(0deg,var(--bg) 75%,transparent);padding:20px 16px 14px;text-align:center;font-family:'Space Mono',monospace;font-size:10px;color:#1E3A5F;pointer-events:none;}
+
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes scaleIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes ring{from{transform:rotate(-15deg)}to{transform:rotate(15deg)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="label-row">
+    <div class="label-top">Daily System 🔥</div>
+    <div class="sw-status" id="swStatus" style="background:#1E293B;color:#64748B;">
+      <div class="sw-dot" style="background:#64748B;"></div><span>Checking...</span>
+    </div>
+  </div>
+  <div class="clock">
+    <div class="clock-time" id="clockTime">00:00:00</div>
+    <div class="clock-date" id="clockDate">—</div>
+  </div>
+  <div class="day-progress">
+    <div class="progress-row"><span>Day Progress</span><span id="progressLabel">0/11 done</span></div>
+    <div class="bar-track"><div class="bar-fill" id="dayBar" style="width:0%"></div></div>
+  </div>
+</div>
+
+<div id="notifBanner" class="notif-banner" style="display:none;">
+  <div style="font-size:24px;flex-shrink:0;">🔔</div>
+  <div class="notif-text">Background alarms ON කරන්න <strong>Notifications Allow</strong> කරන්න!</div>
+  <button class="notif-btn" onclick="requestNotifPermission()">Allow</button>
+</div>
+
+<div id="nowCard" class="now-card" style="background:#0F172A;border:1px solid #1E293B;">
+  <div class="now-tag" id="nowTag">NOW PLAYING</div>
+  <div class="now-row">
+    <div><div class="now-title" id="nowTitle">—</div><div class="now-desc" id="nowDesc">—</div></div>
+    <div class="now-badge" id="nowBadge">—</div>
+  </div>
+  <div class="block-progress">
+    <div class="bpr"><span>Block Progress</span><span id="blockPct">0%</span></div>
+    <div class="block-track"><div class="block-fill" id="blockFill" style="width:0%"></div></div>
+  </div>
+  <div class="next-hint" id="nextHint"></div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" id="tabToday" onclick="switchTab('today')">📅 Schedule</button>
+  <button class="tab-btn inactive" id="tabAlarms" onclick="switchTab('alarms')">⏰ Alarms</button>
+</div>
+
+<div id="panelToday" class="schedule-list"></div>
+<div id="panelAlarms" class="alarms-list" style="display:none;"></div>
+<div class="bottom-hint">TAP TASKS TO MARK DONE ✓</div>
+
+<div class="modal-overlay" id="alarmModal" style="display:none;">
+  <div class="modal-box" id="modalBox">
+    <div class="m-emoji">⏰</div>
+    <div class="m-tag" id="mTag">ALARM</div>
+    <div class="m-title" id="mTitle">—</div>
+    <div class="m-desc" id="mDesc">—</div>
+    <button class="m-btn" onclick="closeModal()">OK — LET'S GO 🔥</button>
+  </div>
+</div>
+
+<script>
+const SCHEDULE=[
+  {id:1,time:"06:30",label:"🌅 Wake Up",    desc:"ඇහැරෙන්න + fresh වෙන්න",        color:"#FF6B35"},
+  {id:2,time:"07:00",label:"💪 Exercise",    desc:"Pushups / Walk",                  color:"#FF6B35"},
+  {id:3,time:"07:30",label:"🍳 Breakfast",   desc:"Breakfast + plan review",         color:"#FF6B35"},
+  {id:4,time:"08:00",label:"💻 Deep Work 1", desc:"WordPress / Website build 🔥",    color:"#00D4FF"},
+  {id:5,time:"11:00",label:"☕ Break",        desc:"Relax / Phone / Music",           color:"#FFD700"},
+  {id:6,time:"12:00",label:"💻 Deep Work 2", desc:"Practice + Demo site build",      color:"#00D4FF"},
+  {id:7,time:"14:00",label:"😴 Lunch Rest",  desc:"Lunch + short rest",             color:"#A78BFA"},
+  {id:8,time:"15:00",label:"📈 Growth",      desc:"Fiverr research + Portfolio",     color:"#34D399"},
+  {id:9,time:"17:00",label:"🌆 Evening",     desc:"Walk / Friends / Relax",          color:"#F472B6"},
+  {id:10,time:"19:00",label:"🌙 Light Work", desc:"Videos / Small edits / Learning",color:"#818CF8"},
+  {id:11,time:"22:30",label:"💤 Sleep",      desc:"Sleep — important! 😴",           color:"#64748B"},
+];
+
+let completed=JSON.parse(localStorage.getItem("c-v1")||"[]");
+let alarmSt=JSON.parse(localStorage.getItem("a-v1")||"null");
+if(!alarmSt){alarmSt={};SCHEDULE.forEach(s=>alarmSt[s.id]=true);}
+let firedSet=new Set();
+let swReg=null;
+let audioCtx=null;
+
+const saveC=()=>localStorage.setItem("c-v1",JSON.stringify(completed));
+const saveA=()=>localStorage.setItem("a-v1",JSON.stringify(alarmSt));
+
+function toMin(t){const[h,m]=t.split(":").map(Number);return h*60+m;}
+function nowMin(){const n=new Date();return n.getHours()*60+n.getMinutes();}
+function fmt(t){const[h,m]=t.split(":").map(Number);const ap=h>=12?"PM":"AM";const hh=h%12||12;return `${hh}:${String(m).padStart(2,"0")} ${ap}`;}
+function getCur(){const now=nowMin();for(let i=SCHEDULE.length-1;i>=0;i--){if(now>=toMin(SCHEDULE[i].time))return SCHEDULE[i];}return SCHEDULE[0];}
+function getNext(){const now=nowMin();for(let i=0;i<SCHEDULE.length;i++){if(toMin(SCHEDULE[i].time)>now)return SCHEDULE[i];}return null;}
+function getBlockPct(){const c=getCur(),n=getNext();if(!n)return 100;const now=nowMin();return Math.min(100,Math.max(0,((now-toMin(c.time))/(toMin(n.time)-toMin(c.time)))*100));}
+function timeUntil(t){const d=toMin(t)-nowMin();if(d<=0)return null;const h=Math.floor(d/60),m=d%60;return h>0?`${h}h ${m}m`:`${m}m`;}
+
+// ── SERVICE WORKER ──────────────────────────────────────────────
+async function registerSW(){
+  if(!("serviceWorker" in navigator))return setSWStatus("unsupported");
+  try{
+    swReg=await navigator.serviceWorker.register("./sw.js",{scope:"./"});
+    await navigator.serviceWorker.ready;
+    setSWStatus("active");
+    sendAlarms();
+  }catch(e){console.warn("SW:",e);setSWStatus("failed");}
+}
+
+function sendAlarms(){
+  if(!swReg||!swReg.active)return;
+  swReg.active.postMessage({type:"SCHEDULE_ALARMS",alarms:SCHEDULE.map(s=>({...s,enabled:!!alarmSt[s.id]}))});
+}
+
+function setSWStatus(s){
+  const el=document.getElementById("swStatus");
+  const dot=el.querySelector(".sw-dot");
+  const sp=el.querySelector("span");
+  const cfg={
+    active:  ["rgba(52,211,153,0.12)","#34D399","#34D399","BG Alarms ON ✅"],
+    failed:  ["rgba(255,107,53,0.12)", "#FF6B35","#FF6B35","SW Failed"],
+    unsupported:["rgba(255,107,53,0.12)","#FF6B35","#FF6B35","Not Supported"],
+  }[s]||["#1E293B","#64748B","#64748B","Checking..."];
+  el.style.background=cfg[0];el.style.color=cfg[1];dot.style.background=cfg[2];sp.textContent=cfg[3];
+}
+
+// ── NOTIFICATIONS ────────────────────────────────────────────────
+async function checkNotifPerm(){
+  if(!("Notification" in window))return;
+  const p=Notification.permission;
+  const b=document.getElementById("notifBanner");
+  if(p==="default") b.style.display="flex";
+  else b.style.display="none";
+}
+
+async function requestNotifPermission(){
+  const r=await Notification.requestPermission();
+  if(r==="granted"){
+    document.getElementById("notifBanner").style.display="none";
+    registerSW();
+  }
+  checkNotifPerm();
+}
+
+async function testNotif(){
+  if(Notification.permission!=="granted"){await requestNotifPermission();return;}
+  if(swReg&&swReg.active){
+    swReg.showNotification("🔔 Test OK!",{body:"Background alarms working! ✅",vibrate:[300,100,300],requireInteraction:true});
+  } else {
+    new Notification("🔔 Test!",{body:"Notifications working!"});
+  }
+}
+
+// ── CLOCK ────────────────────────────────────────────────────────
+function updateClock(){
+  const n=new Date();
+  document.getElementById("clockTime").textContent=n.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:true});
+  document.getElementById("clockDate").textContent=n.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"});
+}
+
+// ── NOW CARD ─────────────────────────────────────────────────────
+function updateNowCard(){
+  const c=getCur(),n=getNext(),pct=Math.round(getBlockPct());
+  const card=document.getElementById("nowCard");
+  card.style.cssText=`background:linear-gradient(135deg,${c.color}18,#141E30);border:1px solid ${c.color}44;box-shadow:0 4px 30px ${c.color}22;margin:0 16px 14px;border-radius:20px;padding:20px;position:relative;overflow:hidden;`;
+  document.getElementById("nowTag").style.color=c.color;
+  document.getElementById("nowTitle").textContent=c.label.split(" ").slice(1).join(" ");
+  document.getElementById("nowDesc").textContent=c.desc;
+  const b=document.getElementById("nowBadge");b.textContent=fmt(c.time);b.style.background=c.color;
+  document.getElementById("blockPct").textContent=pct+"%";
+  const bf=document.getElementById("blockFill");bf.style.width=pct+"%";bf.style.background=c.color;
+  document.getElementById("nextHint").innerHTML=n?
+    `⏭ Next: <span style="color:${n.color}">${n.label.split(" ").slice(1).join(" ")}</span>`+(timeUntil(n.time)?` in <span style="color:#F1F5F9">${timeUntil(n.time)}</span>`:""): "✅ All done today!";
+}
+
+// ── BARS ────────────────────────────────────────────────────────
+function updateDayBar(){
+  document.getElementById("dayBar").style.width=Math.round((completed.length/SCHEDULE.length)*100)+"%";
+  document.getElementById("progressLabel").textContent=`${completed.length}/${SCHEDULE.length} done`;
+}
+
+// ── SCHEDULE ─────────────────────────────────────────────────────
+function buildSchedule(){
+  const p=document.getElementById("panelToday");p.innerHTML="";
+  const now=nowMin(),cur=getCur();
+  SCHEDULE.forEach(item=>{
+    const isCur=item.id===cur.id,isPast=toMin(item.time)<now&&!isCur,isDone=completed.includes(item.id);
+    const d=document.createElement("div");
+    d.className="task-item"+(isCur?" cur":"")+(isPast?" past":"");
+    d.style.background=isCur?`${item.color}14`:"#0F172A";
+    if(isCur)d.style.border=`1px solid ${item.color}44`;
+    d.innerHTML=`${isCur?`<div class="cur-bar" style="background:${item.color}"></div>`:""}
+      <div class="t-icon" style="background:${item.color}22;border:1px solid ${item.color}33">${isDone?"✅":item.label.split(" ")[0]}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="t-name ${isDone?"done":""}">${item.label.split(" ").slice(1).join(" ")}</div>
+        <div class="t-sub">${item.desc}</div>
+      </div>
+      <div class="t-time" style="color:${item.color}">${fmt(item.time)}</div>`;
+    d.addEventListener("click",()=>{
+      const idx=completed.indexOf(item.id);
+      if(idx>-1)completed.splice(idx,1);else completed.push(item.id);
+      saveC();buildSchedule();updateDayBar();
+    });
+    p.appendChild(d);
+  });
+}
+
+// ── ALARMS ───────────────────────────────────────────────────────
+function buildAlarms(){
+  const p=document.getElementById("panelAlarms");p.innerHTML="";
+  const swOK=swReg&&swReg.active&&Notification.permission==="granted";
+  const note=document.createElement("div");note.className="a-note";
+  note.innerHTML=swOK?"✅ Background alarms active! App close වුනත් notification එනවා.":
+    "⚠️ Background alarms OFF.<br>1️⃣ Notifications Allow<br>2️⃣ <strong>Add to Home Screen</strong> (PWA) කරන්න";
+  p.appendChild(note);
+  SCHEDULE.forEach(item=>{
+    const on=!!alarmSt[item.id];
+    const d=document.createElement("div");d.className="alarm-item";
+    d.style.background=on?`${item.color}11`:"#0F172A";d.style.borderColor=on?`${item.color}33`:"#1E293B";
+    d.innerHTML=`
+      <div class="a-icon" style="background:${on?item.color+"22":"#1E293B"}">${item.label.split(" ")[0]}</div>
+      <div style="flex:1;">
+        <div class="a-name ${on?"":"off"}">${item.label.split(" ").slice(1).join(" ")}</div>
+        <div class="a-time" style="color:${on?item.color:"#475569"}">${fmt(item.time)}</div>
+      </div>
+      <button class="tog" style="background:${on?item.color:"#1E293B"};border:1px solid ${on?item.color:"#334155"};" onclick="toggleAlarm(${item.id})">
+        <div class="tog-dot" style="left:${on?"28px":"4px"};background:${on?"#000":"#64748B"};"></div>
+      </button>`;
+    p.appendChild(d);
+  });
+  const btn=document.createElement("button");btn.className="test-btn";btn.textContent="🔔 Test Notification";btn.onclick=testNotif;
+  p.appendChild(btn);
+}
+
+function toggleAlarm(id){alarmSt[id]=!alarmSt[id];saveA();sendAlarms();buildAlarms();}
+
+// ── IN-APP ALARM (when app open, no SW) ─────────────────────────
+function playBeep(){
+  try{
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    [[880,0],[880,.2],[880,.4],[1100,.8],[1100,1.0],[1100,1.2]].forEach(([f,t])=>{
+      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      o.connect(g);g.connect(audioCtx.destination);
+      o.frequency.value=f;o.type="sine";
+      g.gain.setValueAtTime(.4,audioCtx.currentTime+t);
+      g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+t+.15);
+      o.start(audioCtx.currentTime+t);o.stop(audioCtx.currentTime+t+.2);
+    });
+  }catch(e){}
+}
+
+function showInApp(item){
+  const box=document.getElementById("modalBox");
+  box.style.cssText=`border-radius:24px;padding:32px;max-width:340px;width:100%;text-align:center;animation:scaleIn .25s ease;background:linear-gradient(145deg,#0F172A,#1E293B);border:2px solid ${item.color};box-shadow:0 0 60px ${item.color}44;`;
+  document.getElementById("mTag").style.color=item.color;document.getElementById("mTag").textContent=`ALARM — ${item.time}`;
+  document.getElementById("mTitle").textContent=item.label.split(" ").slice(1).join(" ");
+  document.getElementById("mDesc").textContent=item.desc;
+  document.getElementById("alarmModal").style.display="flex";
+  playBeep();
+}
+
+function closeModal(){document.getElementById("alarmModal").style.display="none";try{audioCtx&&audioCtx.close();}catch(e){}}
+
+function checkInAppAlarms(){
+  const now=nowMin();
+  SCHEDULE.forEach(item=>{
+    if(!alarmSt[item.id])return;
+    const key=`${item.id}-${new Date().toDateString()}`;
+    if(Math.abs(now-toMin(item.time))===0&&!firedSet.has(key)){
+      firedSet.add(key);
+      if(Notification.permission!=="granted")showInApp(item);
+    }
+  });
+}
+
+// ── TABS ─────────────────────────────────────────────────────────
+function switchTab(t){
+  const isTd=t==="today";
+  document.getElementById("panelToday").style.display=isTd?"flex":"none";
+  document.getElementById("panelAlarms").style.display=isTd?"none":"flex";
+  document.getElementById("tabToday").className="tab-btn "+(isTd?"active":"inactive");
+  document.getElementById("tabAlarms").className="tab-btn "+(isTd?"inactive":"active");
+  if(!isTd)buildAlarms();
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+function tick(){updateClock();updateNowCard();}
+buildSchedule();updateDayBar();tick();
+setInterval(tick,1000);
+setInterval(checkInAppAlarms,15000);
+(async()=>{await checkNotifPerm();if(Notification.permission==="granted")await registerSW();})();
+</script>
+</body>
+</html>
